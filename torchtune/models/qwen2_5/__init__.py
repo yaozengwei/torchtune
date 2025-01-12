@@ -29,6 +29,7 @@ from ._model_builders import (
     qwen2_5_72b_instruct,
     qwen2_5_7b_base,
     qwen2_5_7b_instruct,
+    qwen2_5_7b_mla,
     qwen2_5_tokenizer,
 )
 
@@ -57,5 +58,6 @@ __all__ = [
     "qwen2_5_72b_instruct",
     "qwen2_5_7b_base",
     "qwen2_5_7b_instruct",
+    "qwen2_5_7b_mla",
     "qwen2_5_tokenizer",
 ]

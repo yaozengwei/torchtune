@@ -15,7 +15,7 @@ from torchtune.modules.kv_cache import KVCache
 logger = logging.getLogger(__name__)
 
 
-class MultiHeadAttention(nn.Module):
+class MultiHeadLatentAttention(nn.Module):
     """Multi-headed attention layer with support for grouped query
     attention (GQA) introduced in https://arxiv.org/abs/2305.13245v1.
 
@@ -89,6 +89,8 @@ class MultiHeadAttention(nn.Module):
         q_proj: nn.Module,
         k_proj: nn.Module,
         v_proj: nn.Module,
+        k_up_proj: nn.Module,
+        v_up_proj: nn.Module,
         output_proj: nn.Module,
         pos_embeddings: Optional[nn.Module] = None,
         q_norm: Optional[nn.Module] = None,
@@ -97,6 +99,7 @@ class MultiHeadAttention(nn.Module):
         max_seq_len: int = 4096,
         is_causal: bool = True,
         attn_dropout: float = 0.0,
+        kv_dropout: float = 0.0,
     ) -> None:
         super().__init__()
         if num_heads % num_kv_heads != 0:
@@ -112,7 +115,10 @@ class MultiHeadAttention(nn.Module):
             )
 
         if attn_dropout < 0 or attn_dropout > 1:
-            raise ValueError(f"attn_dropout ({embed_dim}) must be between 0.0 and 1.0")
+            raise ValueError(f"attn_dropout ({attn_dropout}) must be between 0.0 and 1.0")
+
+        if kv_dropout < 0 or kv_dropout > 1:
+            raise ValueError(f"kv_dropout ({kv_dropout}) must be between 0.0 and 1.0")
 
         if bool(q_norm) ^ bool(k_norm):
             raise ValueError("q and k norm must be set together")
@@ -122,6 +128,7 @@ class MultiHeadAttention(nn.Module):
         self.num_kv_heads = num_kv_heads
         self.embed_dim = embed_dim
         self.attn_dropout = attn_dropout
+        self.kv_dropout = kv_dropout
         self.head_dim = head_dim
         self.max_seq_len = max_seq_len
         self.is_causal = is_causal
@@ -131,6 +138,8 @@ class MultiHeadAttention(nn.Module):
         self.q_proj = q_proj
         self.k_proj = k_proj
         self.v_proj = v_proj
+        self.k_up_proj = k_up_proj
+        self.v_up_proj = v_up_proj
         self.output_proj = output_proj
         self.q_norm = q_norm
         self.k_norm = k_norm
@@ -262,6 +271,12 @@ class MultiHeadAttention(nn.Module):
             k = self.k_proj(y)
             v = self.v_proj(y)
 
+            k = nn.functional.dropout(k, p=self.kv_dropout, training=self.training)
+            k = self.k_up_proj(k)
+            v = nn.functional.dropout(v, p=self.kv_dropout, training=self.training)
+            v = self.v_up_proj(v)
+            # now k,v shape [b, s_y, num_heads * head_dim]
+
             # Apply positional embeddings
             # k,v shape: [b, s_y, n_kv, h_d]
             k = k.view(b, s_y, -1, self.head_dim)
@@ -269,7 +284,7 @@ class MultiHeadAttention(nn.Module):
             if self.pos_embeddings is not None:
                 k = self.pos_embeddings(k, input_pos=input_pos)
 
-            # k,v shape: [b, n_kv, s_y, h_d]
+            # k,v shape: [b, n_h, s_y, h_d]
             k = k.transpose(1, 2)
             v = v.transpose(1, 2)
 
@@ -280,14 +295,6 @@ class MultiHeadAttention(nn.Module):
             # Update key-value cache
             if self.kv_cache is not None and self.cache_enabled:
                 k, v = self.kv_cache.update(k, v)
-
-        # If needed, expand the key and value tensors to have the same shape
-        # as the query tensor by copying values across the relevant dim
-        # k,v shape: [b, n_kv, s, h_d] -> [b, n_h, s, h_d]
-        if self.num_heads != self.num_kv_heads:
-            expand_shape = (b, self.num_kv_heads, q_per_kv, -1, self.head_dim)
-            k = k.unsqueeze(2).expand(expand_shape).flatten(1, 2)
-            v = v.unsqueeze(2).expand(expand_shape).flatten(1, 2)
 
         output = self._attention_call(
             q,

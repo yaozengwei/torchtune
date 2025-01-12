@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from .attention import MultiHeadAttention  # noqa
+from .attention_mla import MultiHeadLatentAttention  # noqa
 from .attention_utils import create_block_causal_mask, packed_block_causal_mask
 from .common_utils import (
     delete_kv_caches,

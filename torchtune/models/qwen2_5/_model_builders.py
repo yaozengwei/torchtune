@@ -7,7 +7,7 @@ from typing import List, Optional
 
 from torchtune.data._prompt_templates import _get_prompt_template, _TemplateType
 
-from torchtune.models.qwen2._component_builders import lora_qwen2, qwen2
+from torchtune.models.qwen2._component_builders import lora_qwen2, qwen2, qwen2_mla
 from torchtune.models.qwen2_5._tokenizer import QWEN2_5_SPECIAL_TOKENS, Qwen2_5Tokenizer
 from torchtune.modules import TransformerDecoder
 from torchtune.modules.peft import LORA_ATTN_MODULES
@@ -179,6 +179,33 @@ def qwen2_5_7b_instruct() -> TransformerDecoder:
         intermediate_dim=18944,
         max_seq_len=32768,
         attn_dropout=0.0,
+        norm_eps=1e-6,
+        rope_base=1000000.0,
+    )
+
+
+def qwen2_5_7b_mla() -> TransformerDecoder:
+    """
+    Builder for creating a Qwen2.5 base model initialized w/ the default 7B parameter values
+    from https://huggingface.co/Qwen/Qwen2.5-7B
+
+    Returns:
+        TransformerDecoder: Instantiation of Qwen2.5 7B model
+
+    Note:
+        The base and instruct versions have slightly different architectures for all Qwen2.5 model sizes
+        except 0.5B and 3B. Make sure to select the correct model builder for the weights.
+    """
+    return qwen2_mla(
+        vocab_size=152064,
+        num_layers=28,
+        num_heads=28,
+        num_kv_heads=4,
+        embed_dim=3584,
+        intermediate_dim=18944,
+        max_seq_len=131072,
+        attn_dropout=0.0,
+        kv_dropout=0.05,
         norm_eps=1e-6,
         rope_base=1000000.0,
     )
