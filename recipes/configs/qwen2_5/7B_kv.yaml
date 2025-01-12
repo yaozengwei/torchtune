@@ -35,7 +35,7 @@ dataset:
   conversation_column: messages
   conversation_style: openai
   name: all
-  packed: False  # True increases speed
+  packed: True  # True increases speed
   train_on_input: False  # Mask out prompt when computing loss
 seed: null
 shuffle: True
@@ -59,16 +59,16 @@ checkpointer:
 resume_from_checkpoint: False
 
 # Fine-tuning arguments
-batch_size: 8
+batch_size: 16
 epochs: 2
 optimizer:
   _component_: torch.optim.AdamW
   fused: True
-  lr: 3e-04
+  lr: 2e-5
 loss:
   _component_: torchtune.modules.loss.CEWithChunkedOutputLoss
 max_steps_per_epoch: null
-gradient_accumulation_steps: 4  # Use to increase effective batch size
+gradient_accumulation_steps: 1  # Use to increase effective batch size
 clip_grad_norm: null
 compile: False  # torch.compile the model + loss, True increases speed + decreases memory
 optimizer_in_bwd: False  # True saves memory. Requires gradient_accumulation_steps=1
@@ -85,9 +85,9 @@ dtype: bf16
 
 # Logging
 metric_logger:
-  _component_: torchtune.training.metric_logging.DiskLogger
-  log_dir: ${output_dir}/logs
-log_every_n_steps: 1
+  _component_: torchtune.training.metric_logging.TensorBoardLogger
+  log_dir: ${output_dir}/tensorboard
+log_every_n_steps: 5
 log_peak_memory_stats: True
 
 
