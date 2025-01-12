@@ -540,10 +540,36 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
         )
 
         with training.set_default_dtype(self._dtype), self._device:
-            for m in model.modules():
+            if not self._resume_from_checkpoint:
+                init_device = "cpu" if fsdp_cpu_offload else self._device
+                if init_new_params:
+                    # Initialize k_up_proj and v_up_proj as identity matrix
+                    attn_module = model.layers[0].attn
+                    num_heads = attn_module.num_heads
+                    num_kv_heads = attn_module.num_kv_heads
+                    head_dim = attn_module.head_dim
+                    q_per_kv = num_heads // num_kv_heads
+                    # Construct a identity matrix
+                    weight = torch.eye(num_kv_heads * head_dim)
+                    weight = weight.view(num_kv_heads, head_dim, num_kv_heads * head_dim).unsqueeze(1)
+                    weight = weight.expand(num_kv_heads, q_per_kv, head_dim, num_kv_heads * head_dim)
+                    weight = weight.reshape(num_heads * head_dim, num_kv_heads * head_dim)
+
+            for name, module in model.named_modules():
                 # RoPE is not covered in state dict
-                if hasattr(m, "rope_init"):
-                    m.rope_init()
+                if hasattr(module, "rope_init"):
+                    module.rope_init()
+
+                if not self._resume_from_checkpoint and ("k_up_proj" in name or "v_up_proj" in name):
+                    module.to_empty(device=init_device)
+                    assert module.bias is None
+                    # lora may not be covered in state dict
+                    # if finetune for the 1st time
+                    if init_new_params:
+                        module.weight.data = weight.clone().detach().to(
+                            device=module.weight.data.device,
+                            dtype=module.weight.data.dtype
+                        )
 
         # This method will convert the full model state dict into a sharded state
         # dict and load into the model
@@ -559,25 +585,6 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
         if not self._resume_from_checkpoint:
             for key in missing_keys:
                 assert "k_up_proj" in key or "v_up_proj" in key, key
-
-            if init_new_params:
-                # Initialize k_up_proj and v_up_proj as identity matrix
-                attn_module = model.layers[0].attn
-                num_heads = attn_module.num_heads
-                num_kv_heads = attn_module.num_kv_heads
-                head_dim = attn_module.head_dim
-                q_per_kv = num_heads // num_kv_heads
-                # Construct a identity matrix
-                weight = torch.eye(num_kv_heads * head_dim)
-                weight = weight.view(num_kv_heads, head_dim, num_kv_heads * head_dim).unsqueeze(1)
-                weight = weight.expand(num_kv_heads, q_per_kv, head_dim, num_kv_heads * head_dim)
-                weight = weight.reshape(num_heads * head_dim, num_kv_heads * head_dim)
-                for name, module in model.named_modules():
-                    if "k_up_proj" in name or "v_up_proj" in name:
-                        assert module.bias is None
-                        module.weight.data = weight.clone().detach().to(
-                            device=module.weight.data.device, dtype=module.weight.data.dtype
-                        )
         else:
             assert len(missing_keys) == 0, missing_keys
 
