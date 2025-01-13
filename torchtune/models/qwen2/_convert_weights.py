@@ -28,6 +28,8 @@ _FROM_HF = {
     "model.layers.{}.post_attention_layernorm.weight": "layers.{}.mlp_norm.scale",
     "model.norm.weight": "norm.scale",
     "lm_head.weight": "output.weight",
+    "model.layers.{}.self_attn.k_up_proj.weight": "layers.{}.attn.k_up_proj.weight",
+    "model.layers.{}.self_attn.v_up_proj.weight": "layers.{}.attn.v_up_proj.weight",
 }
 
 
