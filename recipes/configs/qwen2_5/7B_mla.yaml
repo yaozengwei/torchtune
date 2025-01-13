@@ -18,14 +18,15 @@
 # best to use 7B_full_single_device.yaml for those cases
 
 output_dir: output/qwen2_5_7B/finetune_kv_mla
-hf_model_path: hf_download/model/Qwen2.5-7B
+hf_model_path: hf_download/model/Qwen2.5-7B  # need to specify a path to the saved model with initialized weights
+hf_tokenizer_path: hf_download/model/Qwen2.5-7B
 hf_ds_path: hf_download/dataset/smoltalk
 
 # Tokenizer
 tokenizer:
   _component_: torchtune.models.qwen2_5.qwen2_5_tokenizer
-  path: ${hf_model_path}/vocab.json
-  merges_file: ${hf_model_path}/merges.txt
+  path: ${hf_tokenizer_path}/vocab.json
+  merges_file: ${hf_tokenizer_path}/merges.txt
   max_seq_len: 2048
 
 # Dataset
@@ -43,17 +44,19 @@ shuffle: True
 # Model Arguments
 model:
   _component_: torchtune.models.qwen2_5.qwen2_5_7b_mla
-
-init_new_params: True
+  finetune_modules: ['k_proj', 'v_proj', 'k_up_proj', 'v_up_proj']
 
 checkpointer:
   _component_: torchtune.training.FullModelHFCheckpointer
   checkpoint_dir: ${hf_model_path}
   checkpoint_files: [
-    model-00001-of-00004.safetensors,
-    model-00002-of-00004.safetensors,
-    model-00003-of-00004.safetensors,
-    model-00004-of-00004.safetensors,
+    model-00001-of-00007.safetensors,
+    model-00002-of-00007.safetensors,
+    model-00003-of-00007.safetensors,
+    model-00004-of-00007.safetensors,
+    model-00005-of-00007.safetensors,
+    model-00006-of-00007.safetensors,
+    model-00007-of-00007.safetensors
   ]
   recipe_checkpoint: null
   output_dir: ${output_dir}

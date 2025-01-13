@@ -23,6 +23,7 @@ from torchtune import config, modules, training, utils
 from torchtune.config._utils import _get_component_from_path
 from torchtune.data import padded_collate_packed
 from torchtune.datasets import ConcatDataset
+from torchtune.modules.peft import set_trainable_params
 from torchtune.recipe_interfaces import FTRecipeInterface
 from torchtune.training import DummyProfiler, PROFILER_KEY
 from torchtune.training.activations import apply_selective_activation_checkpointing
@@ -35,6 +36,35 @@ from torchtune.training.lr_schedulers import get_lr
 from tqdm import tqdm
 
 log = utils.get_logger("DEBUG")
+
+
+def num_trainable_params(model: nn.Module):
+    """Return the total number of trainable parameters."""
+    num_params = sum(param.numel() for param in model.parameters() if param.requires_grad)
+    return num_params
+
+
+def get_finetune_params(
+    model: nn.Module,
+    finetune_modules: List[str] = ["k_proj", "v_proj"],
+) -> Dict[str, nn.Parameter]:
+    """
+    Return the subset of parameters from a model that are specified to be finetuned.
+
+    Args:
+        model (nn.Module): Instance of model class containing some adapter params.
+        finetune_modules: A list of specified module names, e.g. ['k_proj', 'v_proj']
+
+    Returns:
+        Dict[str, nn.Parameter]: the subset of model's state dict containing
+        only parameters to be finetuned.
+    """
+    finetune_params = {}
+    for name, param in model.named_parameters():
+        if any(key in name for key in finetune_modules):
+            finetune_params.update({name: param})
+
+    return finetune_params
 
 
 class FullFinetuneRecipeDistributed(FTRecipeInterface):
@@ -263,8 +293,6 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
         )
         self._tokenizer = config.instantiate(cfg.tokenizer)
 
-        self._freeze_parameters()
-
         self._optimizer = self._setup_optimizer(
             cfg_optimizer=cfg.optimizer,
             optimizer_in_bwd=self._optimizer_in_bwd,
@@ -492,6 +520,8 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
               full state dicts are loaded with ``torch.load(mmap=True)``
         """
 
+        self._finetune_modules = list(cfg_model.finetune_modules)
+
         utils.log_rank_zero(
             log,
             "FSDP is enabled. Instantiating model and loading checkpoint on Rank 0 ...",
@@ -500,6 +530,18 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
 
         with training.set_default_dtype(self._dtype), torch.device("meta"):
             model = config.instantiate(cfg_model)
+
+        utils.log_rank_zero(
+            log,
+            "Before set_trainable_params, number of trainable parameters = "
+            f"{num_trainable_params(model)}"
+        )
+        set_trainable_params(model, get_finetune_params(model, self._finetune_modules))
+        utils.log_rank_zero(
+            log,
+            "After set_trainable_params, number of trainable parameters = "
+            f"{num_trainable_params(model)}"
+        )
 
         if self._compile:
             training.compile_model(model, verbose=self._is_rank_zero)
@@ -574,30 +616,6 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
         torch.distributed.barrier()
 
         return model
-
-    def _freeze_parameters(
-        self,
-        free_keys: List[str] = ["k_proj", "v_proj"],
-    ):
-        def num_trainable_params(model):
-            num_params = sum(param.numel() for param in model.parameters() if param.requires_grad)
-            return num_params
-
-        utils.log_rank_zero(
-            log,
-            "Before _freeze_parameters, number of trainable parameters = "
-            f"{num_trainable_params(self._model)}"
-        )
-
-        for name, param in self._model.named_parameters():
-            if not any(key in name for key in free_keys):
-                param.requires_grad = False
-
-        utils.log_rank_zero(
-            log,
-            "After _freeze_parameters, number of trainable parameters = "
-            f"{num_trainable_params(self._model)}"
-        )
 
     def _setup_optimizer(
         self,
