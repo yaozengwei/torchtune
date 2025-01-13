@@ -290,6 +290,7 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
             model_state_dict=checkpoint_dict[training.MODEL_KEY],
             ac_mode=cfg.get("ac_mode", None),
             ac_option=cfg.get("ac_option", None),
+            finetune_modules=list(cfg.finetune_modules),
         )
         self._tokenizer = config.instantiate(cfg.tokenizer)
 
@@ -511,6 +512,7 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
         custom_sharded_layers: Optional[List[str]] = None,
         ac_mode: Optional[str] = None,
         ac_option: Optional[int] = None,
+        finetune_modules: List[str] = ["k_proj", "v_proj"],
     ) -> nn.Module:
         """
         Model initialization has some important considerations:
@@ -519,8 +521,6 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
            b. All ranks calls ``load_state_dict`` without peaking CPU RAMs since
               full state dicts are loaded with ``torch.load(mmap=True)``
         """
-
-        self._finetune_modules = list(cfg_model.finetune_modules)
 
         utils.log_rank_zero(
             log,
@@ -536,7 +536,7 @@ class FullFinetuneRecipeDistributed(FTRecipeInterface):
             "Before set_trainable_params, number of trainable parameters = "
             f"{num_trainable_params(model)}"
         )
-        set_trainable_params(model, get_finetune_params(model, self._finetune_modules))
+        set_trainable_params(model, get_finetune_params(model, finetune_modules))
         utils.log_rank_zero(
             log,
             "After set_trainable_params, number of trainable parameters = "
