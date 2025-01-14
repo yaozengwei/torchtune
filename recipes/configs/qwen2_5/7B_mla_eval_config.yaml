@@ -3,22 +3,25 @@
 # To launch, run the following command from root torchtune directory:
 #    tune run eleuther_eval --config eleuther_evaluation tasks=["truthfulqa_mc2","hellaswag"]
 
-output_dir: output/qwen2_5_7B/finetune_kv  # Not needed
-checkpoint_dir: output/qwen2_5_7B/finetune_kv/epoch_1
+output_dir: output/qwen2_5_7B/finetune_kv_mla  # Not needed
+checkpoint_dir: output/qwen2_5_7B/finetune_kv_mla/epoch_1
 hf_tokenizer_path: hf_download/model/Qwen2.5-7B
 
 # Model Arguments
 model:
-  _component_: torchtune.models.qwen2_5.qwen2_5_7b_base
+  _component_: torchtune.models.qwen2_5.qwen2_5_7b_mla
 
 checkpointer:
   _component_: torchtune.training.FullModelHFCheckpointer
   checkpoint_dir: ${checkpoint_dir}
   checkpoint_files: [
-    ft-model-00001-of-00004.safetensors,
-    ft-model-00002-of-00004.safetensors,
-    ft-model-00003-of-00004.safetensors,
-    ft-model-00004-of-00004.safetensors,
+    ft-model-00001-of-00007.safetensors,
+    ft-model-00002-of-00007.safetensors,
+    ft-model-00003-of-00007.safetensors,
+    ft-model-00004-of-00007.safetensors,
+    ft-model-00005-of-00007.safetensors,
+    ft-model-00006-of-00007.safetensors,
+    ft-model-00007-of-00007.safetensors,
   ]
   recipe_checkpoint: null
   output_dir: ${output_dir}
