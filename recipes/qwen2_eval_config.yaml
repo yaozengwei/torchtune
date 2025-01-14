@@ -1,0 +1,48 @@
+# Config for EleutherEvalRecipe in eleuther_eval.py
+#
+# To launch, run the following command from root torchtune directory:
+#    tune run eleuther_eval --config eleuther_evaluation tasks=["truthfulqa_mc2","hellaswag"]
+
+output_dir: output/qwen2_5_7B/finetune_kv_mla # Not needed
+hf_tokenizer_path: hf_download/model/Qwen2.5-7B
+
+# Model Arguments
+model:
+  _component_: torchtune.models.qwen2_5.qwen2_5_7b_mla
+
+checkpointer:
+  _component_: torchtune.training.FullModelHFCheckpointer
+  checkpoint_dir: ${output_dir}
+  checkpoint_files: [
+    model-00001-of-00007.safetensors,
+    model-00002-of-00007.safetensors,
+    model-00003-of-00007.safetensors,
+    model-00004-of-00007.safetensors,
+    model-00005-of-00007.safetensors,
+    model-00006-of-00007.safetensors,
+    model-00007-of-00007.safetensors
+  ]
+  recipe_checkpoint: null
+  output_dir: ${output_dir}
+  model_type: QWEN2
+
+tokenizer:
+  _component_: torchtune.models.qwen2_5.qwen2_5_tokenizer
+  path: ${hf_tokenizer_path}/vocab.json
+  merges_file: ${hf_tokenizer_path}/merges.txt
+  max_seq_len: null
+
+# Environment
+device: cuda
+dtype: bf16
+seed: 1234 # It is not recommended to change this seed, b/c it matches EleutherAI's default seed
+
+# EleutherAI specific eval args
+tasks: ["ifeval", "winogrande", "mmlu", "bbh"]
+limit: null
+max_seq_length: 4096
+batch_size: 8
+enable_kv_cache: True
+
+# Quantization specific args
+quantizer: null
