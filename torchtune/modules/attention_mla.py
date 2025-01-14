@@ -173,7 +173,7 @@ class MultiHeadLatentAttention(nn.Module):
             self.kv_cache = KVCache(
                 batch_size=batch_size,
                 max_seq_len=max_seq_len,
-                num_kv_heads=self.num_kv_heads,
+                num_kv_heads=self.num_heads,
                 head_dim=self.head_dim,
                 dtype=dtype,
             )
@@ -292,6 +292,7 @@ class MultiHeadLatentAttention(nn.Module):
             if self.k_norm is not None:
                 k = self.k_norm(k)
 
+            # TODO: Later we need to cache the kv states before up-proj
             # Update key-value cache
             if self.kv_cache is not None and self.cache_enabled:
                 k, v = self.kv_cache.update(k, v)
