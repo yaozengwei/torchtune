@@ -237,6 +237,32 @@ def qwen2_5_14b_base() -> TransformerDecoder:
     )
 
 
+def qwen2_5_14b_mla() -> TransformerDecoder:
+    """
+    Builder for creating a Qwen2.5 base model initialized w/ the default 14B parameter values
+    from https://huggingface.co/Qwen/Qwen2.5-14B
+
+    Returns:
+        TransformerDecoder: Instantiation of Qwen2.5 14B model
+
+    Note:
+        The base and instruct versions have slightly different architectures for all Qwen2.5 model sizes
+        except 0.5B and 3B. Make sure to select the correct model builder for the weights.
+    """
+    return qwen2_mla(
+        vocab_size=152064,
+        num_layers=48,
+        num_heads=40,
+        num_kv_heads=8,
+        embed_dim=5120,
+        intermediate_dim=13824,
+        max_seq_len=131072,
+        attn_dropout=0.0,
+        norm_eps=1e-5,
+        rope_base=1000000.0,
+    )
+
+
 def qwen2_5_14b_instruct() -> TransformerDecoder:
     """
     Builder for creating a Qwen2.5 instruct model initialized w/ the default 14B parameter values
