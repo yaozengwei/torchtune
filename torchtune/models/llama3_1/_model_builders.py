@@ -6,7 +6,7 @@
 from typing import List
 from functools import partial
 
-from torchtune.models.llama3_1._component_builders import llama3_1, lora_llama3_1
+from torchtune.models.llama3_1._component_builders import llama3_1, llama3_1_mla, lora_llama3_1
 
 from torchtune.modules import TransformerDecoder
 from torchtune.modules.peft import LORA_ATTN_MODULES
@@ -39,6 +39,28 @@ def llama3_1_8b() -> TransformerDecoder:
     )
 
 
+def llama3_1_8b_mla() -> TransformerDecoder:
+    """
+    Builder for creating a Llama3.1 model initialized w/ the default 8b parameter values.
+
+    Returns:
+        TransformerDecoder: Instantiation of Llama3.1 8B model
+    """
+    return llama3_1_mla(
+        vocab_size=128_256,
+        num_layers=32,
+        num_heads=32,
+        num_kv_heads=8,
+        embed_dim=4096,
+        max_seq_len=131072,
+        intermediate_dim=14336,
+        attn_dropout=0.0,
+        kv_dropout=0.0,
+        norm_eps=1e-5,
+        rope_base=500_000,
+    )
+
+
 def llama3_1_70b() -> TransformerDecoder:
     """
     Builder for creating a Llama3.1 model initialized w/ the default 70B parameter values.
@@ -63,7 +85,7 @@ def llama3_1_70b() -> TransformerDecoder:
 def llama3_1_405b() -> TransformerDecoder:
     """
     Builder for creating a Llama3.1 model initialized w/ the default 405B parameter values.
-    
+
     Returns:
         TransformerDecoder: Instantiation of Llama3.1 405B model
     """

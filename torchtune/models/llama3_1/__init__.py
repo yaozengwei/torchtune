@@ -10,6 +10,7 @@ from ._model_builders import (  # noqa
     llama3_1_405b,
     llama3_1_70b,
     llama3_1_8b,
+    llama3_1_8b_mla,
     lora_llama3_1_405b,
     lora_llama3_1_70b,
     lora_llama3_1_8b,
@@ -22,6 +23,7 @@ from ._position_embeddings import Llama3ScaledRoPE
 __all__ = [
     "llama3_1",
     "llama3_1_8b",
+    "llama3_1_8b_mla",
     "llama3_1_70b",
     "llama3_1_405b",
     "lora_llama3_1",
