@@ -51,14 +51,19 @@ checkpointer:
   _component_: torchtune.training.FullModelHFCheckpointer
   checkpoint_dir: ${hf_model_path}
   checkpoint_files: [
-    model-00001-of-00008.safetensors,
-    model-00002-of-00008.safetensors,
-    model-00003-of-00008.safetensors,
-    model-00004-of-00008.safetensors,
-    model-00005-of-00008.safetensors,
-    model-00006-of-00008.safetensors,
-    model-00007-of-00008.safetensors,
-    model-00008-of-00008.safetensors,
+    model-00001-of-00013.safetensors,
+    model-00002-of-00013.safetensors,
+    model-00003-of-00013.safetensors,
+    model-00004-of-00013.safetensors,
+    model-00005-of-00013.safetensors,
+    model-00006-of-00013.safetensors,
+    model-00007-of-00013.safetensors,
+    model-00008-of-00013.safetensors,
+    model-00009-of-00013.safetensors,
+    model-00010-of-00013.safetensors,
+    model-00011-of-00013.safetensors,
+    model-00012-of-00013.safetensors,
+    model-00013-of-00013.safetensors,
   ]
   recipe_checkpoint: null
   output_dir: ${output_dir}
