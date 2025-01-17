@@ -258,6 +258,7 @@ def qwen2_5_14b_mla() -> TransformerDecoder:
         intermediate_dim=13824,
         max_seq_len=131072,
         attn_dropout=0.0,
+        kv_dropout=0.0,
         norm_eps=1e-5,
         rope_base=1000000.0,
     )
