@@ -118,6 +118,7 @@ def hf_to_tune(
     num_kv_heads: int = 32,
     dim: int = 4096,
     head_dim: int = None,
+    use_kv_up_proj: bool = False,
 ) -> Dict[str, torch.Tensor]:
     """
     Convert a state dict from HF's format to torchtune's format. State dicts
@@ -134,7 +135,7 @@ def hf_to_tune(
         dim (int): Dimension of the model.
         head_dim (int): Dimension of the head. If not provided, it will be calculated
             as dim // num_heads.
-
+        use_kv_up_proj: (bool): Whether use k_up_proj and v_up_proj.
     Returns:
         Dict[str, torch.Tensor]: State dict in torchtune's format.
     """
@@ -149,13 +150,22 @@ def hf_to_tune(
             .reshape((head_dim * n_heads), dim)
         )
 
+    def _permute_up_proj(t):
+        return (
+            t.view(num_heads, 2, head_dim // 2, num_kv_heads * head_dim)
+            .transpose(1, 2)
+            .reshape(num_heads * head_dim, num_kv_heads * head_dim)
+        )
+
     for key, value in state_dict.items():
         if "rotary_emb.inv_freq" not in key:  # Skip loading the position embeddings
             new_key = get_mapped_key(key, _FROM_HF)
             if "q_proj" in key:
                 value = _permute(value, num_heads)
-            elif "k_proj" in key:
+            elif "k_proj" in key and not use_kv_up_proj:
                 value = _permute(value, num_kv_heads)
+            elif "k_up_proj" in key and use_kv_up_proj:
+                value = _permute_up_proj(value)
 
             converted_state_dict[new_key] = value
     return converted_state_dict
@@ -167,6 +177,7 @@ def tune_to_hf(
     num_kv_heads: int = 32,
     dim: int = 4096,
     head_dim: int = None,
+    use_kv_up_proj: bool = False,
 ):
     """
     Convert a state dict from torchtune's format to HF's format. This function
@@ -179,6 +190,7 @@ def tune_to_hf(
         num_kv_heads (int): Number of heads in the key/value projection layers.
         dim (int): Dimension of the model.
         head_dim (int): Dimension of model attention heads. Default None.
+        use_kv_up_proj: (bool): Whether use k_up_proj and v_up_proj.
 
     Returns:
         Dict[str, torch.Tensor]: State dict in HF's format.
@@ -196,12 +208,21 @@ def tune_to_hf(
             .reshape((head_dim * n_heads), dim)
         )
 
+    def _permute_up_proj(t):
+        return (
+            t.view(num_heads, head_dim // 2, 2, num_kv_heads * head_dim)
+            .transpose(1, 2)
+            .reshape(num_heads * head_dim, num_kv_heads * head_dim)
+        )
+
     for key, value in state_dict.items():
         new_key = get_mapped_key(key, inverted_mapping_dict)
         if "q_proj" in key:
             value = _permute(value, num_heads)
-        elif "k_proj" in key:
+        elif "k_proj" in key and not use_kv_up_proj:
             value = _permute(value, num_kv_heads)
+        elif "k_up_proj" in key and use_kv_up_proj:
+            value = _permute_up_proj(value)
         converted_state_dict[new_key] = value
 
     return converted_state_dict
