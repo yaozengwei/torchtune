@@ -46,6 +46,33 @@ def qwen2_5_0_5b() -> TransformerDecoder:
     )
 
 
+def qwen2_5_0_5b_mla() -> TransformerDecoder:
+    """
+    Builder for creating a Qwen2.5 model (base or instruct) initialized w/ the default 0.5B parameter values
+    from https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct
+
+    Returns:
+        TransformerDecoder: Instantiation of Qwen2.5 0.5B model
+
+    Note:
+        Qwen2.5 0.5B-3B model builders will enable ``tie_word_embeddings`` by default (see :func:`~torchtune.models.qwen2.qwen2`)
+    """
+    return qwen2_mla(
+        vocab_size=151936,
+        num_layers=24,
+        num_heads=14,
+        num_kv_heads=2,
+        embed_dim=896,
+        intermediate_dim=4864,
+        max_seq_len=32768,
+        attn_dropout=0.0,
+        kv_dropout=0.0,
+        norm_eps=1e-6,
+        rope_base=1000000.0,
+        tie_word_embeddings=True,
+    )
+
+
 def qwen2_5_1_5b_base() -> TransformerDecoder:
     """
     Builder for creating a Qwen2.5 base model initialized w/ the default 1.5B parameter values
@@ -70,6 +97,37 @@ def qwen2_5_1_5b_base() -> TransformerDecoder:
         intermediate_dim=8960,
         max_seq_len=131072,
         attn_dropout=0.0,
+        norm_eps=1e-6,
+        rope_base=1000000.0,
+        tie_word_embeddings=True,
+    )
+
+
+def qwen2_5_1_5b_mla() -> TransformerDecoder:
+    """
+    Builder for creating a Qwen2.5 base model initialized w/ the default 1.5B parameter values
+    from https://huggingface.co/Qwen/Qwen2.5-1.5B
+
+    Returns:
+        TransformerDecoder: Instantiation of Qwen2.5 1.5B model
+
+    Note:
+        The base and instruct versions have slightly different architectures for all Qwen2.5 model sizes
+        except 0.5B and 3B. Make sure to select the correct model builder for the weights.
+
+    Note:
+        Qwen2.5 0.5B-3B model builders will enable ``tie_word_embeddings`` by default (see :func:`~torchtune.models.qwen2.qwen2`).
+    """
+    return qwen2_mla(
+        vocab_size=151936,
+        num_layers=28,
+        num_heads=12,
+        num_kv_heads=2,
+        embed_dim=1536,
+        intermediate_dim=8960,
+        max_seq_len=131072,
+        attn_dropout=0.0,
+        kv_dropout=0.0,
         norm_eps=1e-6,
         rope_base=1000000.0,
         tie_word_embeddings=True,
@@ -126,6 +184,33 @@ def qwen2_5_3b() -> TransformerDecoder:
         intermediate_dim=11008,
         max_seq_len=32768,
         attn_dropout=0.0,
+        norm_eps=1e-6,
+        rope_base=1000000.0,
+        tie_word_embeddings=True,
+    )
+
+
+def qwen2_5_3b_mla() -> TransformerDecoder:
+    """
+    Builder for creating a Qwen2.5 model (base or instruct) initialized w/ the default 3B parameter values
+    from https://huggingface.co/Qwen/Qwen2.5-3B-Instruct
+
+    Returns:
+        TransformerDecoder: Instantiation of Qwen2.5 3B model
+
+    Note:
+        Qwen2.5 0.5B-3B model builders will enable ``tie_word_embeddings`` by default (see :func:`~torchtune.models.qwen2.qwen2`)
+    """
+    return qwen2_mla(
+        vocab_size=151936,
+        num_layers=36,
+        num_heads=16,
+        num_kv_heads=2,
+        embed_dim=2048,
+        intermediate_dim=11008,
+        max_seq_len=32768,
+        attn_dropout=0.0,
+        kv_dropout=0.0,
         norm_eps=1e-6,
         rope_base=1000000.0,
         tie_word_embeddings=True,
