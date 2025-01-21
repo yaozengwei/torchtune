@@ -542,6 +542,7 @@ class EleutherEvalRecipe(EvalRecipeInterface):
             self.eleuther_model_wrapper,
             task_dict,
             limit=self.limit,
+            confirm_run_unsafe_code=True,
         )
         t1 = time.time() - t0
 
