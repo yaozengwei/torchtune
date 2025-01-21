@@ -1,0 +1,45 @@
+# Config for EleutherEvalRecipe in eleuther_eval.py
+#
+# To launch, run the following command from root torchtune directory:
+#    tune run eleuther_eval --config eleuther_evaluation tasks=["truthfulqa_mc2","hellaswag"]
+
+output_dir: output/qwen2_5_7B/finetune_kv  # Not needed
+checkpoint_dir: output/qwen2_5_7B/finetune_kv/epoch_1
+hf_tokenizer_path: hf_download/model/Qwen2.5-7B
+
+# Model Arguments
+model:
+  _component_: torchtune.models.llama3_1.llama3_1_8b
+
+checkpointer:
+  _component_: torchtune.training.FullModelHFCheckpointer
+  checkpoint_dir: ${checkpoint_dir}
+  checkpoint_files: [
+    ft-model-00001-of-00004.safetensors,
+    ft-model-00002-of-00004.safetensors,
+    ft-model-00003-of-00004.safetensors,
+    ft-model-00004-of-00004.safetensors,
+  ]
+  recipe_checkpoint: null
+  output_dir: ${output_dir}
+  model_type: LLAMA3
+
+tokenizer:
+  _component_: torchtune.models.llama3.llama3_tokenizer
+  path: ${hf_tokenizer_path}/original/tokenizer.model
+  max_seq_len: null
+
+# Environment
+device: cuda
+dtype: bf16
+seed: 1234 # It is not recommended to change this seed, b/c it matches EleutherAI's default seed
+
+# EleutherAI specific eval args
+tasks: ["ifeval", "winogrande", "mmlu", "bbh"]
+limit: null
+max_seq_length: 4096
+batch_size: 8
+enable_kv_cache: True
+
+# Quantization specific args
+quantizer: null
