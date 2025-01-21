@@ -45,7 +45,7 @@ model:
 finetune_modules: ['k_proj', 'v_proj', 'k_up_proj', 'v_up_proj']
 
 checkpointer:
-  _component_: torchtune.training.FullModelMetaCheckpointer
+  _component_: torchtune.training.FullModelHFCheckpointer
   checkpoint_dir: ${hf_model_path}/
   checkpoint_files: [
     model-00001-of-00007.safetensors,
