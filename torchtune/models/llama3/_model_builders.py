@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from torchtune.data._prompt_templates import _get_prompt_template, _TemplateType
 
-from torchtune.models.llama3._component_builders import llama3, lora_llama3
+from torchtune.models.llama3._component_builders import llama3, llama3_mla, lora_llama3
 from torchtune.models.llama3._tokenizer import Llama3Tokenizer
 
 from torchtune.modules import TransformerDecoder
@@ -39,6 +39,28 @@ def llama3_8b() -> TransformerDecoder:
         max_seq_len=8192,
         intermediate_dim=14336,
         attn_dropout=0.0,
+        norm_eps=1e-5,
+        rope_base=500_000,
+    )
+
+
+def llama3_8b_mla() -> TransformerDecoder:
+    """
+    Builder for creating a Llama3 model initialized w/ the default 8b parameter values.
+
+    Returns:
+        TransformerDecoder: Instantiation of Llama3 8B model
+    """
+    return llama3_mla(
+        vocab_size=128_256,
+        num_layers=32,
+        num_heads=32,
+        num_kv_heads=8,
+        embed_dim=4096,
+        max_seq_len=8192,
+        intermediate_dim=14336,
+        attn_dropout=0.0,
+        kv_dropout=0.0,
         norm_eps=1e-5,
         rope_base=500_000,
     )
